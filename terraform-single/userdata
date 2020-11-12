@@ -1,0 +1,22 @@
+#!/bin/bash
+apt update && sleep 5
+apt install -y apache2 && sleep 5
+systemctl enable apache2 && sleep 5
+apt install -y git && sleep 5
+
+cat << 'EOT' > /web-update.sh
+#!/bin/bash
+cd ~
+git clone https://github.com/mrvalterhugo/web-project
+rm -rf /var/www/html/*
+mv ~/web-project/* /var/www/html/
+chown -R www-data:www-data /var/www/html
+rm -rf ~/web-project
+ec2id=`curl http://169.254.169.254/latest/meta-data/instance-id`
+cat << EOF >> /var/www/html/index.html
+This Instance ID is: $ec2id
+EOF
+EOT
+chmod +x /web-update.sh
+/web-update.sh
+echo "0 *     * * *   root    /web-update.sh" >> /etc/crontab
